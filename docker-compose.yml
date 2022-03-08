@@ -1,0 +1,16 @@
+version: '3'
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - 3000:5000
+    volumes:
+      - ./submissions:/app/submissions
+      - ./db:/app/db
+
+  eval:
+    build: ./eval
+    volumes:
+      - ./submissions:/app/submissions
+      - ./db:/app/db
+    
