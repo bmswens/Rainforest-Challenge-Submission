@@ -1,11 +1,17 @@
 # built in
 import os
-import random
 import json
 import time
 
 # 3rd party
 from schedule import every, repeat, run_pending
+import lpips
+import cv2
+from skimage.metrics import structural_similarity as SSIM
+import torchvision.transforms as transforms
+import torch
+import PIL
+import numpy
 
 # custom
 from database import Database
@@ -15,20 +21,55 @@ import logging
 logging.basicConfig(
     filename="eval.log", 
     format="[%(asctime)s] [%(levelname)s] %(message)s", 
-    encoding="utf-8", 
     level=logging.INFO, 
     datefmt="%Y-%m-%dT%H:%M:%S%z"
 )
 
+toTensor = transforms.ToTensor()
+
+def mse(imageA, imageB):
+	err = numpy.sum((imageA.astype("float") - imageB.astype("float")) ** 2)
+	err /= float(imageA.shape[0] * imageA.shape[1])
+	return err
 
 def evaluate(path):
     """
     Actual implementation goes here.
-    PSNR
-    LPIPS
-    SSIM
+    PSNR -- cv2; switched to MSE because I don't know how to use PSNR otherwise
+    LPIPS -- pip installed
+    SSIM -- scikit-image
     """
-    return random.randint(0, 100)
+    gpu = torch.cuda.is_available()
+    truth_folder = "/app/truth/images"
+    # eval functions
+    lpips_fn = lpips.LPIPS(net='alex')
+    if gpu:
+        lpips_fn.cuda()
+    scores = []
+    for f in os.listdir(truth_folder):
+        # truth
+        truth_path = os.path.join(truth_folder, f)
+        truth_im = PIL.Image.open(truth_path).convert("RGB")
+        truth_array = numpy.array(truth_im)
+        truth_cv = cv2.imread(truth_path)
+        truth_tensor = toTensor(truth_im)
+        if gpu:
+            truth_tensor.cuda()
+        # submission
+        submission_path = os.path.join(path, f)
+        submission_im = PIL.Image.open(submission_path).convert("RGB")
+        submission_array = numpy.array(submission_im)
+        submission_cv = cv2.imread(submission_path)
+        submission_tensor = toTensor(submission_im)
+        if gpu:
+            submission_tensor.cuda()
+        # scores
+        score_lpips = lpips_fn.forward(submission_tensor, truth_tensor)
+        score_lpips = 1 - score_lpips.item() # inverts it so that 1 is better
+        score_ssim = SSIM(submission_array, truth_array, multichannel=True)
+        score_mse = 1 - mse(submission_cv, truth_cv)
+        scores.append((score_lpips + score_mse + score_ssim) / 3)
+    return (sum(scores) / len(scores)) * 100
    
 
 def eval_team(team_path, team):
@@ -53,7 +94,7 @@ def eval_team(team_path, team):
         scores.append(score)
     return scores
         
-@repeat(every(30).seconds)
+@repeat(every(60).seconds)
 def main(path="/app/submissions/valid"):
     logging.info("Starting scan")
     items = [os.path.join(path, item) for item in os.listdir(path)]
@@ -70,6 +111,7 @@ def main(path="/app/submissions/valid"):
             print(top_score, previous_max)
             if top_score > previous_max:
                 db.query(f"UPDATE scores SET score = {top_score} WHERE team = '{team}'")
+    logging.info("Done with scan")
 
 
 if __name__ == '__main__':

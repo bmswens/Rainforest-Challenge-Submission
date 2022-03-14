@@ -13,4 +13,5 @@ services:
     volumes:
       - ./submissions:/app/submissions
       - ./db:/app/db
+      - ./truth:/app/truth
     
