@@ -36,38 +36,65 @@ class Database:
             self.connection = None
             self.cursor = None
 
-    def query(self, query_string):
-        self.cursor.execute(query_string)
+    def query(self, query_string, args=None):
+        if args:
+            self.cursor.execute(query_string, args)
+        else:
+            self.cursor.execute(query_string)
         return self.cursor.fetchall()
 
-    def get_top_scores(self, n=5):
-        self.cursor.execute(f"SELECT * FROM scores ORDER BY score DESC LIMIT {n};")
+    def get_top_scores(self, table, n=5):
+        self.cursor.execute(f"SELECT * FROM {table} ORDER BY lpips DESC LIMIT {n};")
         results = self.cursor.fetchall()
         output = []
-        for pair in results:
-            output.append({
-                "team": pair[0],
-                "score": pair[1]
-            })
+        for row in results:
+            if table == "MatrixCompletionScores":
+                output.append({
+                    "team": row[0],
+                    "psnr": row[1],
+                    "ssim": row[2],
+                    "lpips": row[3]
+                })
         return output
 
-    def get_score_by_team(self, team):
-        self.cursor.execute(f"SELECT * FROM scores WHERE team = '{team}';")
+    def get_completion_score_by_team(self, team):
+        self.cursor.execute(f"SELECT lpips FROM MatrixCompletionScores WHERE team = ?;", [team])
         results = self.cursor.fetchall()
         if not results:
-            self.cursor.execute(f"INSERT INTO scores (team, score) VALUES ('{team}', 0);")
-            return 0
+            self.cursor.execute(f"INSERT INTO MatrixCompletionScores (team, lpips, psnr, ssim) VALUES (?, 1, 0, 0);", [team])
+            return 1
         else:
-            return results[0][1]
+            return results[0][0]
 
     def create_database(self):
         self.__enter__()
-        table_creation = """
-        CREATE TABLE scores
-        (
-            team TEXT PRIMARY KEY,
-            score REAL NOT NULL
-        );
-        """
-        self.cursor.execute(table_creation)
+        table_creation = [
+            """
+            CREATE TABLE MatrixCompletionScores
+            (
+                team TEXT PRIMARY KEY,
+                psnr REAL NOT NULL,
+                ssim REAL NOT NULL,
+                lpips REAL NOT NULL
+            );
+            """,
+            """
+            CREATE TABLE EstimationScores
+            (
+                team TEXT PRIMARY KEY,
+                pixel REAL NOT NULL,
+                f1 REAL NOT NULL, 
+                iou REAL NOT NULL
+            );
+            """,
+            """
+            CREATE TABLE ImageToImageScores
+            (
+                team TEXT PRIMARY KEY,
+                score REAL NOT NULL
+            );
+            """
+        ]
+        for command in table_creation:
+            self.cursor.execute(command)
         self.__exit__(None, None, None)
