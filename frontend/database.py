@@ -50,7 +50,8 @@ class Database:
                     "team": row[0],
                     "psnr": row[1],
                     "ssim": row[2],
-                    "lpips": row[3]
+                    "lpips": row[3],
+                    "fid": row[4]
                 })
         return output
 
@@ -72,7 +73,8 @@ class Database:
                 team TEXT PRIMARY KEY,
                 psnr REAL NOT NULL,
                 ssim REAL NOT NULL,
-                lpips REAL NOT NULL
+                lpips REAL NOT NULL,
+                fid REAL NOT NULL
             );
             """,
             """

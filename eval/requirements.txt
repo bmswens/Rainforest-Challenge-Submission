@@ -12,6 +12,7 @@ opencv-python==4.5.5.64
 Pillow==8.4.0
 pyparsing==3.0.7
 python-dateutil==2.8.2
+pytorch-fid==0.2.1
 PyWavelets==1.1.1
 schedule==1.1.0
 scikit-image==0.17.2

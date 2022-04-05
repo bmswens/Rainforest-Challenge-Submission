@@ -13,6 +13,8 @@ import torchvision.transforms as transforms
 import torch
 import PIL
 import numpy
+from pytorch_fid import fid_score
+import subprocess
 
 # custom
 from database import Database
@@ -33,13 +35,16 @@ def get_averages(scores):
         scores["lpips"] = 1
         scores["ssim"] = 0
         scores["psnr"] = 0
+        scores["fid"] = 1
         return scores
     lpips_scores = [v["lpips"] for v in scores.values()]
     ssim_scores = [v["ssim"] for v in scores.values()]
     psnr_scores = [v["psnr"] for v in scores.values()]
+    fid_scores = [v.get('fid', 1) for v in scores.values()]
     scores["lpips"] = sum(lpips_scores) / len(lpips_scores)
     scores["ssim"] = sum(ssim_scores) / len(ssim_scores)
     scores["psnr"] = sum(psnr_scores) / len(psnr_scores)
+    scores["fid"] = sum(fid_scores) / len(fid_scores)
     return scores
 
 def eval_folder(truth_folder, submission_folder, lpips_fn, gpu):
@@ -90,6 +95,7 @@ def evaluate(path):
     SSIM -- scikit-image
     """
     gpu = torch.cuda.is_available()
+    device = 'cuda' if gpu else 'cpu'
     truth_folder = "/app/truth/matrix-completion"
     # eval functions
     lpips_fn = lpips.LPIPS(net='alex')
@@ -102,6 +108,18 @@ def evaluate(path):
             continue
         submission_folder = os.path.join(path, folder)
         results = eval_folder(mode_folder, submission_folder, lpips_fn, gpu)
+        # TODO: Replace this hack with the actual Python function call
+        try:
+            results["fid"] = fid_score.calculate_fid_given_paths(
+                [submission_folder, mode_folder],
+                2,
+                device,
+                2048
+            )
+        except:
+            results["fid"] = 1
+        logging.info(f"FID: {results['fid']}")
+        #results["fid"] = float(subprocess.check_output(f"python3 -m pytorch_fid --num-workers 1 {submission_folder} {mode_folder}", shell=True).replace('FID: ', '').replace("\n", '')) # fid_score.calculate_fid_given_paths([submission_folder, truth_folder], 1, device, 2048, 2)
         scores[folder] = results
     scores = get_averages(scores)
     return scores
@@ -120,7 +138,7 @@ def eval_team(team_path, team):
             continue
         logging.info(f"New submission for team: {team}; folder: {folder}")
         results = evaluate(image_path)
-        logging.info(f"Scores: LPIPS: {results['lpips']} SSIM: {results['ssim']} PSNR: {results['psnr']}")
+        logging.info(f"Scores: LPIPS: {results['lpips']} SSIM: {results['ssim']} PSNR: {results['psnr']} FID: {results['fid']}")
         metadata["evaluated"] = True
         metadata.update(**results)
         with open(meta_path, 'w') as output:
@@ -151,7 +169,7 @@ def main(path="/app/submissions/valid/matrix_completion"):
             previous_best = db.get_completion_score_by_team(team)
             logging.info(f"Previous Best: {previous_best} This Best: {best_score}")
             if best_score < previous_best:
-                db.query(f"UPDATE MatrixCompletionScores SET lpips = {best_score}, psnr = {low_score['psnr']}, ssim = {low_score['ssim']} WHERE team = ?", [team])
+                db.query(f"UPDATE MatrixCompletionScores SET lpips = {best_score}, psnr = {low_score['psnr']}, ssim = {low_score['ssim']}, fid = {low_score['fid']} WHERE team = ?", [team])
     logging.info("Done with scan")
 
 
