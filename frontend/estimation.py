@@ -13,26 +13,26 @@ import logging
 import utils
 from database import Database
 
-matrix_completion = Blueprint(
-    "matrix_completion",
+estimation = Blueprint(
+    "estimation",
     __name__,
     "templates"
 )
 
-@matrix_completion.route("/")
+@estimation.route("/")
 def leaderboard():
     with Database("db/db.sqlite3") as db:
-        top_scores = db.get_top_matrix_scores()
+        top_scores = db.get_top_estimation_scores()
     for index, row in enumerate(top_scores):
         row["rank"] = index + 1
-    return render_template("matrix-completion-leaderboard.html", ranks=top_scores)
+    return render_template("deforestation-estimation-leaderboard.html", ranks=top_scores)
 
-@matrix_completion.route("/submit")
+@estimation.route("/submit")
 def submission_page():
     return render_template("submit.html")
 
 
-@matrix_completion.route("/api/submit", methods=["POST"])
+@estimation.route("/api/submit", methods=["POST"])
 def submit():
     team_name = request.form["teamName"]
     emails = request.form["emails"].split('\r\n')
@@ -47,4 +47,4 @@ def submit():
         return response
     # make the folder to extract to
     utils.save(zip_path, __name__, team_name, emails)
-    return redirect("/matrix-completion/", code=301)
+    return redirect("/estimation/", code=301)

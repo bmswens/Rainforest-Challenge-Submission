@@ -19,8 +19,8 @@
     <div class="container">
         <div class="row justify-content-center">
             <div class="col-6 d-flex flex-column align-items-center justify-content-center">
-                <h2 class="text-center">MIT Rainforest Challenge</h2>
-                <h4 class="text-center">Matrix Completion Challenge</h4>
+                <h2 text-align="center">MIT Rainforest Challenge</h2>
+                <h4>Deforestation Estimation Challenge</h4>
             </div>
         </div>
         <div class="row justify-content-center">
@@ -40,10 +40,9 @@
                         <tr>
                             <th scope="col">Rank</th>
                             <th scope="col">Team</th>
-                            <th scope="col">LPIPS</th>
-                            <th scope="col">PSNR</th>
-                            <th scope="col">SSIM</th>
-                            <th scope="col">FID</th>
+                            <th scope="col">Pixel Accuracy</th>
+                            <th scope="col">F1</th>
+                            <th scope="col">IoU</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -51,10 +50,9 @@
                         <tr>
                             <td>{{ entry.rank }}</td>
                             <td>{{ entry.team }}</td>
-                            <td>{{ entry.lpips }}</td>
-                            <td>{{ entry.psnr }}</td>
-                            <td>{{ entry.ssim }}</td>
-                            <td>{{ entry.fid }}</td>
+                            <td>{{ entry.pixel }}</td>
+                            <td>{{ entry.f1 }}</td>
+                            <td>{{ entry.iou }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>

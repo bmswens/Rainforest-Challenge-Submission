@@ -40,26 +40,38 @@ class Database:
         self.cursor.execute(query_string)
         return self.cursor.fetchall()
 
-    def get_top_scores(self, table, n=5):
-        self.cursor.execute(f"SELECT * FROM {table} ORDER BY lpips DESC LIMIT {n};")
+    def get_top_matrix_scores(self, n=5):
+        self.cursor.execute(f"SELECT * FROM MatrixCompletionScores ORDER BY lpips DESC LIMIT {n};")
         results = self.cursor.fetchall()
         output = []
         for row in results:
-            if table == "MatrixCompletionScores":
-                output.append({
-                    "team": row[0],
-                    "psnr": row[1],
-                    "ssim": row[2],
-                    "lpips": row[3],
-                    "fid": row[4]
-                })
+            output.append({
+                "team": row[0],
+                "psnr": row[1],
+                "ssim": row[2],
+                "lpips": row[3],
+                "fid": row[4]
+            })
         return output
 
+    def get_top_estimation_scores(self, n=5):
+        self.cursor.execute(f"SELECT * FROM EstimationScores ORDER BY pixel DESC LIMIT {n};")
+        results = self.cursor.fetchall()
+        output = []
+        for row in results:
+            output.append({
+                "team": row[0],
+                "pixel": row[1],
+                "f1": row[2],
+                "iou": row[3]
+            })
+        return output
+        
     def get_completion_score_by_team(self, team):
-        self.cursor.execute(f"SELECT lpips FROM MatrixCompletionScores WHERE team = '{team}';")
+        self.cursor.execute(f"SELECT lpips FROM matrixcompletionscores WHERE team = '{team}';")
         results = self.cursor.fetchall()
         if not results:
-            self.cursor.execute(f"INSERT INTO MatrixCompletionScores (team, lpips, psnr, ssim) VALUES ('{team}', 1, 0, 0);")
+            self.cursor.execute(f"INSERT INTO matrixcompletionscores (team, lpips, psnr, ssim) VALUES ('{team}', 1, 0, 0);")
             return 1
         else:
             return results[0][0]

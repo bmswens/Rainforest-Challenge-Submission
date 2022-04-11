@@ -23,7 +23,7 @@ from database import Database
 import logging
 logging.basicConfig(
     filename="eval.log", 
-    format="[%(asctime)s] [%(levelname)s] %(message)s", 
+    format=f"[%(asctime)s] [%(levelname)s] [{__file__}] %(message)s", 
     level=logging.INFO, 
     datefmt="%Y-%m-%dT%H:%M:%S%z"
 )
