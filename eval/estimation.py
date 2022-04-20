@@ -1,4 +1,5 @@
 # built in
+from multiprocessing.sharedctypes import Value
 import os
 import json
 import time
@@ -36,35 +37,46 @@ def get_pixel_accuracy(truth, submission):
                 pixels.append(0)
     accuracy = sum(pixels) / len(pixels)
     accuracy = accuracy * 100
+    return accuracy
+
+def get_f1_score(truth, submission, chip):
+    truth = np.array(truth)
+    truth = truth.flatten()
+    submission = np.array(submission)
+    submission = submission.flatten()
+    logging.info(chip)
+    score = 0
+    try:
+        score = f1_score(truth, submission, zero_division=1, pos_label=0)
+    except:
+        logging.info(np.unique(truth))
+        logging.info(np.unique(submission))
+        raise ValueError("oops")
+    return score
 
 
-def get_f1_score(truth, submission):
-    truth = np.ndarray(truth)
-    truth = normalize(truth).flatten()
-    submission = np.ndarray(submission)
-    submission = normalize(submission).flatten()
-    return f1_score(truth, submission)
-
-
-def get_iou(truth, submission, target=1):
+def get_iou(truth, submission, target=0):
     total_areas = 0
     correct = 0
-    truth = np.ndarray(truth)
-    truth = normalize(truth).flatten()
-    submission = np.ndarray(submission)
-    submission = normalize(submission).flatten()
+    truth = np.array(truth)
+    truth = truth.flatten()
+    submission = np.array(submission)
+    submission = submission.flatten()
     for index, true_pixel in enumerate(truth):
+        if true_pixel == target:
+            total_areas += 1
         pred_pixel = submission[index]
         if true_pixel == target and pred_pixel == target:
             correct += 1
-        elif true_pixel == target or pred_pixel == target:
-            total_areas += 1
-    return correct / total_areas
+    if not total_areas:
+        return 0
+    else:
+        return correct / total_areas
 
 
 def eval_date(submission_folder, truth_folder):
     output = {}
-    chips = [f for f in os.listdir(truth_folder) if '.tiff' in f]
+    chips = [f for f in os.listdir(truth_folder) if '.png' in f]
     for chip in chips:
         # truth
         truth_path = os.path.join(truth_folder, chip)
@@ -76,7 +88,7 @@ def eval_date(submission_folder, truth_folder):
 
         # pixel accuracy
         accuracy = get_pixel_accuracy(truth_image, submission_image)
-        f1 = get_f1_score(truth_image, submission_image)
+        f1 = get_f1_score(truth_image, submission_image, chip)
         iou = get_iou(truth_image, submission_image)
 
         scores = {
@@ -85,6 +97,7 @@ def eval_date(submission_folder, truth_folder):
             "iou": iou
         }
 
+        logging.info(scores)
         output[chip] = scores
     # get averages
     accuracies = [v["accuracy"] for v in output.values()]
@@ -92,16 +105,10 @@ def eval_date(submission_folder, truth_folder):
     ious = [v["iou"] for v in output.values()]
     if accuracies:
         output["accuracy"] = sum(accuracies) / len(accuracies)
-    else:
-        output["accuracy"] = 0
     if f1s:
         output["f1"] = sum(accuracies) / len(accuracies)
-    else:
-        output["f1"] = 0
     if ious:
         output["iou"] = sum(ious) / len(ious)
-    else:
-        output["iou"] = 0
     return output
 
 def eval_submission(folder):
@@ -125,7 +132,8 @@ def eval_submission(folder):
     ious = []
     for date in dates:
         truth_path = os.path.join(truth_folder, date)
-        submission_path = os.path.join(folder, date)
+        submission_path = os.path.join(folder, 'images', date)
+        logging.info(f'Evaluating date: {date}')
         scores = eval_date(submission_path, truth_path)
         output[date] = scores
         accuracies.append(scores["accuracy"])
@@ -143,13 +151,19 @@ def eval_submission(folder):
         output["iou"] = sum(ious) / len(ious)
     else:
         output["iou"] = 0
+    # write out meta data
+    meta['scores'] = output
+    meta['evaluated'] = True
+    with open(meta_path, 'w') as outgoing:
+        outgoing.write(json.dumps(meta, indent=2))
     return output
 
 
 def eval_team(folder, team):
-    submissions = [f for f in os.listdir(folder) if os.path.isdir(f)]
+    submissions = [f for f in os.listdir(folder)]
     accuracy = 0
     best = {}
+    logging.info(submissions)
     for submission in submissions:
         full_path = os.path.join(folder, submission)
         scores = eval_submission(full_path)
@@ -157,10 +171,10 @@ def eval_team(folder, team):
         if scores["accuracy"] > accuracy:
             best = scores
             accuracy = scores["accuracy"]
-        with Database('db/database.sqlite3') as db:
+        with Database('db/db.sqlite3') as db:
             previous_best = db.get_estimation_score_by_team(team)
             if accuracy > previous_best:
-                db.query(f"UPDATE EstimationScores SET pixel = {accuracy}, f1 = {best['f1']}, iou = {best['iou']} WHERE team = {team}")
+                db.query(f"UPDATE EstimationScores SET pixel = {accuracy}, f1 = {best['f1']}, iou = {best['iou']} WHERE team = '{team}'")
 
         
 @repeat(every(60).seconds)

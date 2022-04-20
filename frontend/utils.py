@@ -18,7 +18,7 @@ def verify(path, challenge):
     # add one to account for parent folder
     if len(files) != config[challenge]["image_count"]:
         output["ok"] = False
-        output["errors"].append(f"Expected {config.n_images} files, recieved {len(files)}")
+        output["errors"].append(f"Expected {config[challenge]['image_count']} files, recieved {len(files)}")
     return output
 
 
