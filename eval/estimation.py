@@ -55,23 +55,21 @@ def get_f1_score(truth, submission, chip):
     return score
 
 
-def get_iou(truth, submission, target=0):
-    total_areas = 0
-    correct = 0
-    truth = np.array(truth)
-    truth = truth.flatten()
-    submission = np.array(submission)
-    submission = submission.flatten()
-    for index, true_pixel in enumerate(truth):
-        if true_pixel == target:
-            total_areas += 1
-        pred_pixel = submission[index]
-        if true_pixel == target and pred_pixel == target:
-            correct += 1
-    if not total_areas:
-        return 0
-    else:
-        return correct / total_areas
+def get_iou(truth, submission):
+    """
+    Logical not is a applied because the mask is black pixels, so it 
+    must be inverted after casting to numpy array
+    """
+    truth = np.array(truth, dtype=bool)
+    truth = np.logical_not(truth)
+    submission = np.array(submission, dtype=bool)
+    submission = np.logical_not(submission)
+    overlap = truth * submission
+    union  = truth + submission
+    iou = overlap.sum() / float(union.sum())
+    if np.isnan(iou):
+        iou = 1
+    return iou
 
 
 def eval_date(submission_folder, truth_folder):
@@ -167,6 +165,8 @@ def eval_team(folder, team):
     for submission in submissions:
         full_path = os.path.join(folder, submission)
         scores = eval_submission(full_path)
+        if not scores:
+            continue
         logging.info(f"Accuracy: {scores['accuracy']} F1: {scores['f1']} IOU: {scores['iou']}")
         if scores["accuracy"] > accuracy:
             best = scores

@@ -9,8 +9,14 @@ estimation = {
     "image_count": 21967
 }
 
+translation = {
+    "image_type": ".png",
+    "image_count": 3
+}
+
 
 config = {
     "matrix_completion": matrix_completion,
-    "estimation": estimation
+    "estimation": estimation,
+    "translation": translation
 }

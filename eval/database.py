@@ -66,6 +66,17 @@ class Database:
                 "iou": row[3]
             })
         return output
+
+    def get_top_translation_scores(self, n=5):
+        self.cursor.execute(f"SELECT * FROM ImageToImageScores ORDER BY score ASC LIMIT {n};")
+        results = self.cursor.fetchall()
+        output = []
+        for row in results:
+            output.append({
+                "team": row[0],
+                "score": row[1]
+            })
+        return output
         
     def get_completion_score_by_team(self, team):
         self.cursor.execute(f"SELECT lpips FROM matrixcompletionscores WHERE team = '{team}';")
@@ -81,6 +92,15 @@ class Database:
         results = self.cursor.fetchall()
         if not results:
             self.cursor.execute(f"INSERT INTO EstimationScores (team, pixel, f1, iou) VALUES ('{team}', 0, 0, 0);")
+            return 1
+        else:
+            return results[0][0]
+
+    def get_translation_score_by_team(self, team):
+        self.cursor.execute(f"SELECT score from ImageToImageScores WHERE team = '{team}';")
+        results = self.cursor.fetchall()
+        if not results:
+            self.cursor.execute(f"INSERT INTO ImageToImageScores (team, score) VALUES ('{team}', 1);")
             return 1
         else:
             return results[0][0]
@@ -113,7 +133,7 @@ class Database:
                 team TEXT PRIMARY KEY,
                 score REAL NOT NULL
             );
-            """
+            """,
         ]
         for command in table_creation:
             self.cursor.execute(command)
