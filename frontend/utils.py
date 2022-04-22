@@ -7,6 +7,15 @@ import json
 # custom
 from config import config
 
+def get_files(path, f_type):
+    output = []
+    for root, dirs, files in os.walk(path):
+        for f in files:
+            if f_type in f:
+                relative_path = os.path.join(root, f).replace(path, '')
+                output.append(relative_path)
+    return output
+
 
 def verify(path, challenge):
     output = {

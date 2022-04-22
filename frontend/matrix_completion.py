@@ -48,3 +48,13 @@ def submit():
     # make the folder to extract to
     utils.save(zip_path, __name__, team_name, emails)
     return redirect("/matrix-completion/", code=301)
+
+@matrix_completion.route('/api/expected-files')
+def get_expected_files():
+    f_type = ".tiff"
+    files = utils.get_files("/app/truth/matrix-completion", f_type)
+    return {
+        "count": len(files),
+        "image_type": f_type,
+        "files": files
+    }

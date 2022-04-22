@@ -48,3 +48,13 @@ def submit():
     # make the folder to extract to
     utils.save(zip_path, __name__, team_name, emails)
     return redirect("/estimation/", code=301)
+
+@estimation.route('/api/expected-files')
+def get_expected_files():
+    f_type = ".png"
+    files = utils.get_files("/app/truth/estimation", f_type)
+    return {
+        "count": len(files),
+        "image_type": f_type,
+        "files": files
+    }
