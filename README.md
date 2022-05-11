@@ -64,5 +64,5 @@ matrix_scores = matrix_eval(matrix_folder, "team")
 ```
 
 ## To Do
- - [] Standardize evaluation scripts
- - [] Add Homepage
+ - [ ] Standardize evaluation scripts
+ - [ ] Add Homepage
