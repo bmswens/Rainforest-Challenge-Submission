@@ -42,7 +42,7 @@ def submit():
     # the zip file
     zip_path = f"submissions/tmp/{team_name}.zip"
     request.files["submission"].save(zip_path)
-    response = utils.verify(zip_path, __name__)
+    response = utils.verify(zip_path, __name__, '.png')
     if not response["ok"]:
         return response
     # make the folder to extract to

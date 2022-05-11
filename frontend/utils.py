@@ -17,17 +17,21 @@ def get_files(path, f_type):
     return output
 
 
-def verify(path, challenge):
+def verify(path, challenge, f_type):
     output = {
         "ok": True,
         "errors": []
     }
+    if challenge == "translation": 
+        return output
     with ZipFile(path) as archive:
         files = archive.namelist()
-    # add one to account for parent folder
-    if len(files) != config[challenge]["image_count"]:
-        output["ok"] = False
-        output["errors"].append(f"Expected {config[challenge]['image_count']} files, recieved {len(files)}")
+    expected_files = get_files(f'/app/truth/{challenge}', f_type)
+    for f in expected_files:
+        f = f[1:]
+        if f not in files:
+            output["errors"].append(f'Missing file: {f}')
+            output["ok"] = False
     return output
 
 

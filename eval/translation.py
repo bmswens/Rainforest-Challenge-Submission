@@ -95,11 +95,12 @@ def eval_team(folder):
         submission_path = os.path.join(folder, submission)
         score = eval_submission(submission_path)
         metadata['scores'] = score
+        metadata['evaluated'] = True
         with open(meta_path, 'w') as output:
             output.write(json.dumps(metadata, indent=2))
         logging.info(f"Average: {score['average']}")
         scores.append(score['average'])
-    this_best = min(scores)
+    this_best = min(scores, default=1)
     with Database("db/db.sqlite3") as db:
         previous_best = db.get_translation_score_by_team(team)
         if this_best < previous_best:

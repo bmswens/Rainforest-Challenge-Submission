@@ -3,4 +3,4 @@ submissions
 __pycache__
 db
 *.sqlite3
-truth
+*truth

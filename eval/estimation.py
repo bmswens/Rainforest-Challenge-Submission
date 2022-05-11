@@ -109,7 +109,7 @@ def eval_date(submission_folder, truth_folder):
         output["iou"] = sum(ious) / len(ious)
     return output
 
-def eval_submission(folder):
+def eval_submission(folder, truth_folder="/app/truth/estimation"):
     output = {}
 
     # skipped if evaluated
@@ -122,7 +122,6 @@ def eval_submission(folder):
     final = os.path.basename(folder)
     logging.info(f"Evaluating {final}")
 
-    truth_folder = "/app/truth/estimation"
     dates = os.listdir(truth_folder)
     # averages
     accuracies = []
