@@ -90,7 +90,7 @@ def eval_folder(truth_folder, submission_folder, lpips_fn, gpu):
 def evaluate(path):
     """
     Actual implementation goes here.
-    PSNR -- cv2; switched to MSE because I don't know how to use PSNR otherwise
+    PSNR -- cv2; 
     LPIPS -- pip installed
     SSIM -- scikit-image
     """
