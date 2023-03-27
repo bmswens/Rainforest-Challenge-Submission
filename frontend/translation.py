@@ -1,6 +1,7 @@
 # built in
 import os
 from zipfile import ZipFile
+import json
 
 # 3rd party
 from flask import Blueprint, render_template
@@ -34,6 +35,7 @@ def submission_page():
 
 @translation.route("/api/submit", methods=["POST"])
 def submit():
+    return "Submissions no longer accepted.", 400
     team_name = request.form["teamName"]
     emails = request.form["emails"].split('\r\n')
     # just in case
@@ -42,7 +44,7 @@ def submit():
     # the zip file
     zip_path = f"submissions/tmp/{team_name}.zip"
     request.files["submission"].save(zip_path)
-    response = utils.verify(zip_path, __name__, '.png')
+    response = utils.verify_c3(zip_path, translation)
     if not response["ok"]:
         return response
     # make the folder to extract to
@@ -51,8 +53,10 @@ def submit():
 
 @translation.route('/api/expected-files')
 def get_expected_files():
-    f_type = ".png"
-    files = utils.get_files("/app/truth/translation", f_type)
+    f_type = ".tiff"
+    with open('/app/truth/translation/files.json') as incoming:
+        items = json.load(incoming)
+    files = [os.path.join('/', f) for f in items]
     return {
         "count": len(files),
         "image_type": f_type,

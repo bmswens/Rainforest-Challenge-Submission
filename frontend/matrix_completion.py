@@ -34,6 +34,7 @@ def submission_page():
 
 @matrix_completion.route("/api/submit", methods=["POST"])
 def submit():
+    return "Submissions no longer accepted", 400
     team_name = request.form["teamName"]
     emails = request.form["emails"].split('\r\n')
     # just in case

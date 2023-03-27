@@ -1,82 +1,88 @@
 # built in
-import os
 import json
+import os
 import time
 
 # 3rd party
-import torch
-import torchvision.transforms as transforms
-import PIL
-import lpips
+import rasterio
+from sklearn.metrics import mean_squared_error as MSE
+import numpy as np
 from schedule import every, repeat, run_pending
 
 # custom
 from database import Database
 
-# torch setups
-GPU = torch.cuda.is_available()
-toTensor = transforms.ToTensor()
-
-# lpips setup
-lpips_fn = lpips.LPIPS(net='alex')
-
 # logging
 import logging
 logging.basicConfig(
-    filename="eval.log", 
-    format=f"[%(asctime)s] [%(levelname)s] [{__file__}] %(message)s", 
-    level=logging.INFO, 
+    filename="eval.log",
+    format=f"[%(asctime)s] [%(levelname)s] [{__file__}] %(message)s",
+    level=logging.INFO,
     datefmt="%Y-%m-%dT%H:%M:%S%z"
 )
 
-def path_to_tensor(path):
-    image = PIL.Image.open(path).convert("RGB")
-    tensor = toTensor(image)
-    if GPU:
-        tensor = tensor.cuda()
-    return tensor
+def avg(x):
+    if not x:
+        return 1000
+    return sum(x) / len(x)
+
+def norm_image(z):
+    immax = np.max(z)
+    immin = np.min(z)
+    divisor = immax - immin
+    if not divisor:
+        divisor = 1.0
+    norm_z = (z-immin)/(divisor)
+    norm_z = norm_z.astype(np.float64)
+    return norm_z
 
 
-def eval_single_folder(submission, truth):
-    output = {
-        "min": 1
-    }
+def load_image(path):
+    img = rasterio.open(path).read()
+    if img.shape[2] == 3:
+        img = img.transpose(2, 0, 1)
+    elif img.shape[0] != 3:
+        logging.error(f"Shape is {img.shape}")
+    multi_rgb = np.zeros((3,256,256))
+    multi_rgb[0,:,:] = norm_image(img[0])
+    multi_rgb[1,:,:] = norm_image(img[1])
+    multi_rgb[2,:,:] = norm_image(img[2])
+    return multi_rgb
+
+
+def eval_mapping(obj, submission_folder, truth="/app/truth/translation"):
+    output = {}
     values = []
-    input_files = [f for f in os.listdir(submission) if '.png' in f]
-    truth_files = [f for f in os.listdir(truth) if '.png' in f]
-    for submitted in input_files:
-        submitted_path = os.path.join(submission, submitted)
-        submitted_tensor = path_to_tensor(submitted_path)
-        for truth_f in truth_files:
-            truth_path = os.path.join(truth, truth_f)
-            truth_tensor = path_to_tensor(truth_path)
-            lpips_response = lpips_fn(submitted_tensor, truth_tensor)
-            score = lpips_response.item()
-            output[f"{submitted.replace('.png', '')} -> {truth_f.replace('.png', '')}"] = score
-            values.append(score)
-    output["min"] = min(values)
+    for truth_path in obj:
+        MSEs = []
+        truth_abs_path = os.path.join(truth, truth_path)
+        truth_img = load_image(truth_abs_path)
+        output[truth_path] = {}
+        for submission_path in obj[truth_path]:
+            submission_abs_path = os.path.join(submission_folder, 'images', submission_path)
+            submission_img = load_image(submission_abs_path)
+            mse = MSE(truth_img.flatten(), submission_img.flatten())
+            MSEs.append(mse)
+            output[truth_path][submission_path] = mse
+            logging.info(f"{truth_path.replace('.tiff', '')} -> {submission_path.replace('.tiff', '')} = {mse}")
+        best = min(MSEs)
+        output[truth_path]["min"] = best
+        values.append(best)
+    output["sum"] = sum(values)
     return output
 
 
 def eval_submission(submission, truth="/app/truth/translation"):
-    output = {
-        "average": 1
-    }
-    total = []
-    to_evaluate = []
-    for item in os.listdir(truth):
-        full_path = os.path.join(truth, item)
-        if os.path.isdir(full_path):
-            to_evaluate.append(full_path)
-    for folder in to_evaluate:
-        input_image = os.path.basename(folder)
-        submission_folder = os.path.join(submission, "images", input_image)
-        scores = eval_single_folder(submission_folder, folder)
-        output[input_image] = scores
-        total.append(scores["min"])
-        logging.info(f"{input_image} {scores['min']}")
-    if total:
-        output["average"] = sum(total) / len(total)
+    output = {}
+    values = []
+    with open(os.path.join(truth, 'mappings.json')) as incoming:
+        inputs = json.load(incoming)
+    for input_f in inputs:
+        mapping = inputs[input_f]
+        scores = eval_mapping(mapping, submission)
+        output[input_f] = scores
+        values.append(scores["sum"])
+    output["average"] = avg(values)
     return output
 
 
@@ -87,25 +93,40 @@ def eval_team(folder):
     submission = os.listdir(folder)
     for submission in submission:
         meta_path = os.path.join(folder, submission, "metadata.json")
-        with open(meta_path) as incoming:
-            metadata = json.load(incoming)
+        metadata = {
+                "team": team,
+                "emails": [],
+                "timestamp": "",
+                "evaluated": False
+            }
+        try:
+            with open(meta_path) as incoming:
+                metadata = json.load(incoming)
+        except:
+            pass
         if metadata["evaluated"]:
             continue
         logging.info(f"Eval {submission}")
         submission_path = os.path.join(folder, submission)
-        score = eval_submission(submission_path)
-        metadata['scores'] = score
+        try:
+            score = eval_submission(submission_path)
+        except Exception as e:
+            logging.error(f'{e}')
+            continue
+        metadata['score'] = score
         metadata['evaluated'] = True
         with open(meta_path, 'w') as output:
             output.write(json.dumps(metadata, indent=2))
         logging.info(f"Average: {score['average']}")
         scores.append(score['average'])
-    this_best = min(scores, default=1)
+    if not scores:
+        return
+    this_best = min(scores, default=1000)
     with Database("db/db.sqlite3") as db:
         previous_best = db.get_translation_score_by_team(team)
         if this_best < previous_best:
             db.query(f"UPDATE ImageToImageScores SET score = {this_best} WHERE team = '{team}'")
-        
+
 
 @repeat(every(60).seconds)
 def main(path="/app/submissions/valid/translation"):
@@ -118,7 +139,8 @@ def main(path="/app/submissions/valid/translation"):
     logging.info("Done with scan")
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     while True:
         run_pending()
         time.sleep(1)
+

@@ -15,6 +15,7 @@ import PIL
 import numpy
 from pytorch_fid import fid_score
 import subprocess
+import rasterio
 
 # custom
 from database import Database
@@ -29,6 +30,22 @@ logging.basicConfig(
 )
 
 toTensor = transforms.ToTensor()
+np = numpy
+
+# monkey patch
+from pytorch_fid.fid_score import ImagePathDataset
+
+def monkey_patch_get_item(self, i):
+    path = self.files[i]
+    img = rasterio.open(path).read()[0]
+    img = norm_image(img).astype(numpy.float32)
+    img = numpy.dstack([img, img, img])
+    if self.transforms is not None:
+        img = self.transforms(img)
+    return img
+
+ImagePathDataset.__getitem__ = monkey_patch_get_item
+
 
 def get_averages(scores):
     if not scores:
@@ -47,6 +64,28 @@ def get_averages(scores):
     scores["fid"] = sum(fid_scores) / len(fid_scores)
     return scores
 
+def norm_image(z):
+    immax = np.max(z)
+    immin = np.min(z)
+    divisor = immax - immin
+    if not divisor:
+        divisor = 1
+    norm_z = (z-immin)/(divisor)
+    norm_z = norm_z.astype(np.float64)
+    return norm_z
+
+
+def rasterio_to_tensor(img):
+    divisor = np.amax(img) - np.amin(img)
+    if not divisor:
+        divisor = 1
+    normalized_input = (img - np.amin(img)) / (divisor)
+    normalized_input = 2*normalized_input - 1
+    stack = np.dstack((normalized_input, normalized_input, normalized_input))
+    stack = stack.reshape([1,3,stack.shape[0],stack.shape[0]])
+    tensor = torch.Tensor(stack)
+    return tensor
+
 def eval_folder(truth_folder, submission_folder, lpips_fn, gpu):
     logging.info(f"Evaluating {truth_folder} folder")
     scores = {}
@@ -54,36 +93,34 @@ def eval_folder(truth_folder, submission_folder, lpips_fn, gpu):
     for f in os.listdir(truth_folder):
         # truth
         truth_path = os.path.join(truth_folder, f)
-        try:
-            truth_im = PIL.Image.open(truth_path).convert("RGB")
-            truth_array = numpy.array(truth_im)
-            truth_cv = cv2.imread(truth_path)
-            truth_tensor = toTensor(truth_im)
-            if gpu:
-                truth_tensor.cuda()
+        truth_im = rasterio.open(truth_path).read()[0]
+        truth_im = norm_image(truth_im)
+        truth_tensor = rasterio_to_tensor(truth_im)
+        if gpu:
+           truth_tensor.cuda()
             # submission
-            submission_path = os.path.join(submission_folder, f)
-            submission_im = PIL.Image.open(submission_path).convert("RGB")
-            submission_array = numpy.array(submission_im)
-            submission_cv = cv2.imread(submission_path)
-            submission_tensor = toTensor(submission_im)
-            if gpu:
-                submission_tensor.cuda()
+        submission_path = os.path.join(submission_folder, f)
+        submission_im = rasterio.open(submission_path).read()[0]
+        submission_im = norm_image(submission_im)
+        submission_tensor = rasterio_to_tensor(submission_im)
+        if gpu:
+            submission_tensor.cuda()
             # scores
-            score_lpips = lpips_fn.forward(submission_tensor, truth_tensor)
-            score_lpips = score_lpips.item()
-            score_ssim = SSIM(submission_array, truth_array, multichannel=True)
-            score_psnr = cv2.PSNR(truth_cv, submission_cv)
-            scores[f] = {
+        # debug
+        score_lpips = lpips_fn.forward(submission_tensor, truth_tensor)
+        score_lpips = score_lpips.item()
+        score_ssim = SSIM(submission_im, truth_im)
+
+        score_psnr = cv2.PSNR(truth_im, submission_im)
+        if numpy.isnan(score_psnr):
+            logging.error(truth_im)
+            logging.error(submission_im)
+        scores[f] = {
                 "lpips": score_lpips,
                 "ssim": score_ssim,
                 "psnr": score_psnr
             }
-            lpips_scores.append(score_lpips)
-        except:
-            e = sys.exc_info()[0]
-            logging.error(f"Failed to analyze {truth_path}")
-            logging.error(str(e))
+        lpips_scores.append(score_lpips)
     scores = get_averages(scores)
     return scores
 
@@ -108,15 +145,17 @@ def evaluate(path):
             continue
         submission_folder = os.path.join(path, folder)
         results = eval_folder(mode_folder, submission_folder, lpips_fn, gpu)
+        # results = {"psnr": 360, "lpips": 0, "ssim": 1}
         # TODO: Replace this hack with the actual Python function call
         try:
             results["fid"] = fid_score.calculate_fid_given_paths(
-                [submission_folder, mode_folder],
-                2,
+                [mode_folder, submission_folder],
+                1,
                 device,
                 2048
             )
-        except:
+        except Exception as e:
+            logging.error(e)
             results["fid"] = 1
         logging.info(f"FID: {results['fid']}")
         #results["fid"] = float(subprocess.check_output(f"python3 -m pytorch_fid --num-workers 1 {submission_folder} {mode_folder}", shell=True).replace('FID: ', '').replace("\n", '')) # fid_score.calculate_fid_given_paths([submission_folder, truth_folder], 1, device, 2048, 2)
@@ -169,7 +208,7 @@ def main(path="/app/submissions/valid/matrix_completion"):
             previous_best = db.get_completion_score_by_team(team)
             logging.info(f"Previous Best: {previous_best} This Best: {best_score}")
             if best_score < previous_best:
-                db.query(f"UPDATE MatrixCompletionScores SET lpips = {best_score}, psnr = {low_score['psnr']}, ssim = {low_score['ssim']}, fid = {low_score['fid']} WHERE team = ?", [team])
+                db.query(f"UPDATE MatrixCompletionScores SET lpips = {best_score}, psnr = {low_score['psnr']}, ssim = {low_score['ssim']}, fid = {low_score['fid']} WHERE team = '{team}'")
     logging.info("Done with scan")
 
 

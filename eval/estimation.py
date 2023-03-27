@@ -11,6 +11,7 @@ from PIL import Image
 from sklearn.metrics import f1_score
 import numpy as np
 from sklearn.preprocessing import normalize
+import rasterio
 
 # custom
 from database import Database
@@ -47,10 +48,11 @@ def get_f1_score(truth, submission, chip):
     logging.info(chip)
     score = 0
     try:
-        score = f1_score(truth, submission, zero_division=1, pos_label=0)
+        score = f1_score(truth, submission, zero_division=1, pos_label=1)
     except:
-        logging.info(np.unique(truth))
-        logging.info(np.unique(submission))
+        logging.error(np.unique(truth))
+        logging.error(np.unique(submission))
+        logging.error(chip)
         raise ValueError("oops")
     return score
 
@@ -61,15 +63,23 @@ def get_iou(truth, submission):
     must be inverted after casting to numpy array
     """
     truth = np.array(truth, dtype=bool)
-    truth = np.logical_not(truth)
+    # truth = np.logical_not(truth)
     submission = np.array(submission, dtype=bool)
-    submission = np.logical_not(submission)
+    # submission = np.logical_not(submission)
     overlap = truth * submission
     union  = truth + submission
     iou = overlap.sum() / float(union.sum())
     if np.isnan(iou):
         iou = 1
     return iou
+
+def norm_image(z):
+    immax = np.max(z)
+    immin = np.min(z)
+    norm_z = (z-immin)/(immax-immin)
+    norm_z = norm_z
+    norm_z = Image.fromarray(np.uint8(norm_z))
+    return norm_z
 
 
 def eval_date(submission_folder, truth_folder):
@@ -78,11 +88,13 @@ def eval_date(submission_folder, truth_folder):
     for chip in chips:
         # truth
         truth_path = os.path.join(truth_folder, chip)
-        truth_image = Image.open(truth_path).convert('L')
+        truth_image = rasterio.open(truth_path).read()[0]
+        truth_image = norm_image(truth_image)
 
         # submission
         submission_path = os.path.join(submission_folder, chip)
-        submission_image = Image.open(submission_path).convert('L')
+        submission_image = rasterio.open(submission_path).read()[0]
+        submission_image = norm_image(submission_image)
 
         # pixel accuracy
         accuracy = get_pixel_accuracy(truth_image, submission_image)
@@ -104,7 +116,7 @@ def eval_date(submission_folder, truth_folder):
     if accuracies:
         output["accuracy"] = sum(accuracies) / len(accuracies)
     if f1s:
-        output["f1"] = sum(accuracies) / len(accuracies)
+        output["f1"] = sum(f1s) / len(f1s)
     if ious:
         output["iou"] = sum(ious) / len(ious)
     return output
@@ -127,21 +139,28 @@ def eval_submission(folder, truth_folder="/app/truth/estimation"):
     accuracies = []
     f1s = []
     ious = []
-    for date in dates:
-        truth_path = os.path.join(truth_folder, date)
-        submission_path = os.path.join(folder, 'images', date)
-        logging.info(f'Evaluating date: {date}')
-        scores = eval_date(submission_path, truth_path)
-        output[date] = scores
+    if all(['.png' in date for date in dates]):
+        scores = eval_date(os.path.join(folder, 'images'), truth_folder)
+        output['all'] = scores
         accuracies.append(scores["accuracy"])
         f1s.append(scores["f1"])
         ious.append(scores["iou"])
+    else:
+        for date in dates:
+            truth_path = os.path.join(truth_folder, date)
+            submission_path = os.path.join(folder, 'images', date)
+            logging.info(f'Evaluating date: {date}')
+            scores = eval_date(submission_path, truth_path)
+            output[date] = scores
+            accuracies.append(scores["accuracy"])
+            f1s.append(scores["f1"])
+            ious.append(scores["iou"])
     if accuracies:
         output["accuracy"] = sum(accuracies) / len(accuracies)
     else:
         output["accuracy"] = 0
     if f1s:
-        output["f1"] = sum(accuracies) / len(accuracies)
+        output["f1"] = sum(f1s) / len(f1s)
     else:
         output["f1"] = 0
     if ious:

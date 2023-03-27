@@ -10,7 +10,7 @@ estimation = {
 }
 
 translation = {
-    "image_type": ".png",
+    "image_type": ".tiff",
     "image_count": 3
 }
 

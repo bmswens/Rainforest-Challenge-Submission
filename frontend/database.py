@@ -40,8 +40,8 @@ class Database:
         self.cursor.execute(query_string)
         return self.cursor.fetchall()
 
-    def get_top_matrix_scores(self, n=5):
-        self.cursor.execute(f"SELECT * FROM MatrixCompletionScores ORDER BY lpips DESC LIMIT {n};")
+    def get_top_matrix_scores(self, n=25):
+        self.cursor.execute(f"SELECT * FROM MatrixCompletionScores ORDER BY lpips ASC LIMIT {n};")
         results = self.cursor.fetchall()
         output = []
         for row in results:
@@ -54,7 +54,7 @@ class Database:
             })
         return output
 
-    def get_top_estimation_scores(self, n=5):
+    def get_top_estimation_scores(self, n=25):
         self.cursor.execute(f"SELECT * FROM EstimationScores ORDER BY pixel DESC LIMIT {n};")
         results = self.cursor.fetchall()
         output = []
@@ -67,7 +67,7 @@ class Database:
             })
         return output
 
-    def get_top_translation_scores(self, n=5):
+    def get_top_translation_scores(self, n=25):
         self.cursor.execute(f"SELECT * FROM ImageToImageScores ORDER BY score ASC LIMIT {n};")
         results = self.cursor.fetchall()
         output = []

@@ -82,7 +82,7 @@ class Database:
         self.cursor.execute(f"SELECT lpips FROM matrixcompletionscores WHERE team = '{team}';")
         results = self.cursor.fetchall()
         if not results:
-            self.cursor.execute(f"INSERT INTO matrixcompletionscores (team, lpips, psnr, ssim) VALUES ('{team}', 1, 0, 0);")
+            self.cursor.execute(f"INSERT INTO matrixcompletionscores (team, lpips, psnr, ssim, fid) VALUES ('{team}', 1, 0, 0, 0);")
             return 1
         else:
             return results[0][0]

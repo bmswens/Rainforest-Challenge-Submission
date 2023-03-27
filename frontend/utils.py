@@ -4,6 +4,10 @@ import datetime
 import os
 import json
 
+#3rd Party
+from PIL import Image
+from flask import current_app
+
 # custom
 from config import config
 
@@ -17,6 +21,23 @@ def get_files(path, f_type):
     return output
 
 
+def verify_c3(path, verify_path="/app/c3_files.json"):
+    output = {
+        "ok": True,
+        "errors": []
+    }
+    with ZipFile(path) as archive:
+        files = archive.namelist()
+    with open('/app/truth/translation/files.json') as incoming:
+        items = json.load(incoming)
+    expected_files = [os.path.join(f) for f in items]
+    for f in expected_files:
+        if f not in files:
+            output["ok"] = False
+            output["errors"].append(f"Missing file: {f}")
+    return output
+
+
 def verify(path, challenge, f_type):
     output = {
         "ok": True,
@@ -26,12 +47,17 @@ def verify(path, challenge, f_type):
         return output
     with ZipFile(path) as archive:
         files = archive.namelist()
-    expected_files = get_files(f'/app/truth/{challenge}', f_type)
-    for f in expected_files:
-        f = f[1:]
-        if f not in files:
-            output["errors"].append(f'Missing file: {f}')
-            output["ok"] = False
+        expected_files = get_files(f'/app/truth/{challenge}', f_type)
+        for f in expected_files:
+            f = f[1:]
+            if f not in files:
+                output["errors"].append(f'Missing file: {f}')
+                output["ok"] = False
+            if challenge == "matrix-completion":
+                img = Image.open(archive.open(f))
+                if img.height != 256 or img.width != 256:
+                    output["errors"].append(f'File {f} should be 256x256')
+                    output["ok"] = False
     return output
 
 
