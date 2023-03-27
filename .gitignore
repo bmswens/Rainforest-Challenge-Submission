@@ -6,3 +6,4 @@ db
 *truth
 wvenv
 .ipynb_checkpoints
+*.zip
