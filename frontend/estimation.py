@@ -22,7 +22,9 @@ estimation = Blueprint(
 @estimation.route("/")
 def leaderboard():
     with Database("db/db.sqlite3") as db:
-        top_scores = db.get_top_estimation_scores()
+        # top scores hidden
+        top_scores = []
+        # top_scores = db.get_top_estimation_scores()
     for index, row in enumerate(top_scores):
         row["rank"] = index + 1
     return render_template("deforestation-estimation-leaderboard.html", ranks=top_scores)
@@ -34,7 +36,6 @@ def submission_page():
 
 @estimation.route("/api/submit", methods=["POST"])
 def submit():
-    return "Submissions no longer accepted.", 400
     team_name = request.form["teamName"]
     emails = request.form["emails"].split('\r\n')
     # just in case
