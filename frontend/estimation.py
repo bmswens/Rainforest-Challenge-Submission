@@ -44,7 +44,7 @@ def submit():
     # the zip file
     zip_path = f"submissions/tmp/{team_name}.zip"
     request.files["submission"].save(zip_path)
-    response = utils.verify(zip_path, __name__, '.png')
+    response = utils.verify(zip_path, __name__, '.tiff')
     if not response["ok"]:
         return response
     # make the folder to extract to
@@ -53,7 +53,7 @@ def submit():
 
 @estimation.route('/api/expected-files')
 def get_expected_files():
-    f_type = ".png"
+    f_type = ".tiff"
     files = utils.get_files("/app/truth/estimation", f_type)
     return {
         "count": len(files),

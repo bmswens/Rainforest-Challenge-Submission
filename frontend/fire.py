@@ -53,7 +53,7 @@ def submit():
 @fire.route('/api/expected-files')
 def get_expected_files():
     f_type = ".tiff"
-    files = utils.get_files("/app/truth/estimation", f_type)
+    files = utils.get_files("/app/truth/fire", f_type)
     return {
         "count": len(files),
         "image_type": f_type,
