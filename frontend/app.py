@@ -1,12 +1,17 @@
 # 3rd party 
-from flask import Flask
+from flask import Flask, render_template
 
 # custom
-from matrix_completion import matrix_completion
+from fire import fire
 from estimation import estimation
 from translation import translation
 
 app = Flask(__name__)
-app.register_blueprint(matrix_completion, url_prefix="/matrix-completion")
+
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+app.register_blueprint(fire, url_prefix="/fire")
 app.register_blueprint(estimation, url_prefix="/estimation")
 app.register_blueprint(translation, url_prefix="/translation")

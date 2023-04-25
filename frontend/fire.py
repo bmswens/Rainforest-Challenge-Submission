@@ -13,13 +13,13 @@ import logging
 import utils
 from database import Database
 
-estimation = Blueprint(
+fire = Blueprint(
     "fire",
     __name__,
     "templates"
 )
 
-@estimation.route("/")
+@fire.route("/")
 def leaderboard():
     with Database("db/db.sqlite3") as db:
         # top scores hidden
@@ -28,12 +28,12 @@ def leaderboard():
         row["rank"] = index + 1
     return render_template("deforestation-fire-leaderboard.html", ranks=top_scores)
 
-@estimation.route("/submit")
+@fire.route("/submit")
 def submission_page():
     return render_template("submit.html")
 
 
-@estimation.route("/api/submit", methods=["POST"])
+@fire.route("/api/submit", methods=["POST"])
 def submit():
     team_name = request.form["teamName"]
     emails = request.form["emails"].split('\r\n')
@@ -50,7 +50,7 @@ def submit():
     utils.save(zip_path, __name__, team_name, emails)
     return redirect("/estimation/", code=301)
 
-@estimation.route('/api/expected-files')
+@fire.route('/api/expected-files')
 def get_expected_files():
     f_type = ".tiff"
     files = utils.get_files("/app/truth/estimation", f_type)
