@@ -13,5 +13,5 @@ def home():
     return render_template("index.html")
 
 app.register_blueprint(fire, url_prefix="/fire")
-app.register_blueprint(estimation, url_prefix="/estimation")
+app.register_blueprint(estimation, url_prefix="/deforestation")
 app.register_blueprint(translation, url_prefix="/translation")

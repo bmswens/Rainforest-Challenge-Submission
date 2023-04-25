@@ -26,7 +26,7 @@ def leaderboard():
         top_scores = [] # db.get_top_fire_scores()
     for index, row in enumerate(top_scores):
         row["rank"] = index + 1
-    return render_template("deforestation-fire-leaderboard.html", ranks=top_scores)
+    return render_template("fire-estimation-leaderboard.html", ranks=top_scores)
 
 @fire.route("/submit")
 def submission_page():
