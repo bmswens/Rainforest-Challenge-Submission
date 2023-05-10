@@ -36,6 +36,7 @@ def submission_page():
 
 @estimation.route("/api/submit", methods=["POST"])
 def submit():
+    return "Submissions not currently accepted", 400
     team_name = request.form["teamName"]
     emails = request.form["emails"].split('\r\n')
     # just in case
