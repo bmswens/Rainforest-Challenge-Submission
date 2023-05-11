@@ -15,4 +15,5 @@ services:
       - /srv/bmswens/submissions:/app/submissions
       - /srv/bmswens/db:/app/db
       - /srv/bmswens/truth:/app/truth
-    
+      - /afs/csail.mit.edu/u/b/bmswens/Rainforest-Challenge-Submission/eval/token.json:/app/token.json
+      - /afs/csail.mit.edu/u/b/bmswens/Rainforest-Challenge-Submission/eval/credentials.json:/app/credentials.json
