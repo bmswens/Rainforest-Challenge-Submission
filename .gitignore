@@ -7,3 +7,6 @@ db
 wvenv
 .ipynb_checkpoints
 *.zip
+creds.json
+credentials.json
+token.json
