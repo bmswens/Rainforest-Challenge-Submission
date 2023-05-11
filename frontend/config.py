@@ -14,9 +14,15 @@ translation = {
     "image_count": 3
 }
 
+fire = {
+    "image_type": ".tiff",
+    "image_count": 500
+}
+
 
 config = {
     "matrix_completion": matrix_completion,
     "estimation": estimation,
-    "translation": translation
+    "translation": translation,
+    "fire": fire
 }
