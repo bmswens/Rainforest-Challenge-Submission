@@ -140,7 +140,7 @@ def eval_submission(folder, truth_folder="/app/truth/fire"):
     accuracies = []
     f1s = []
     ious = []
-    if all(['.png' in date for date in dates]):
+    if all(['.tiff' in date for date in dates]):
         scores = eval_date(os.path.join(folder, 'images'), truth_folder)
         output['all'] = scores
         accuracies.append(scores["accuracy"])
