@@ -75,9 +75,14 @@ def get_iou(truth, submission):
     return iou
 
 def norm_image(z):
-    # new normalization is >0.5 = 1; else 0
-    logging.info(z)
-    norm_z = [1 if x > 0.5 else 0 for x in z]
+    # new normalization is >50 = 1; else 0
+    norm_z = []
+    for row in z:
+        new_row = []
+        for value in row:
+            norm_value = 1 if value > 50 else 0
+            new_row.append(norm_value)
+        norm_z.append(new_row)
     norm_z = Image.fromarray(np.uint8(norm_z))
     return norm_z
 
