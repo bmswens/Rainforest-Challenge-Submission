@@ -75,17 +75,15 @@ def get_iou(truth, submission):
     return iou
 
 def norm_image(z):
-    immax = np.max(z)
-    immin = np.min(z)
-    norm_z = (z-immin)/(immax-immin)
-    norm_z = norm_z
+    # new normalization is >0.5 = 1; else 0
+    norm_z = [1 if x > 0.5 else 0 for x in z]
     norm_z = Image.fromarray(np.uint8(norm_z))
     return norm_z
 
 
 def eval_date(submission_folder, truth_folder):
     output = {}
-    chips = [f for f in os.listdir(truth_folder) if '.png' in f]
+    chips = [f for f in os.listdir(truth_folder) if '.tiff' in f]
     for chip in chips:
         # truth
         truth_path = os.path.join(truth_folder, chip)
