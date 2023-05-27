@@ -3,6 +3,7 @@ from zipfile import ZipFile
 import datetime
 import os
 import json
+import logging
 
 #3rd Party
 from PIL import Image
@@ -55,6 +56,7 @@ def verify(path, challenge, f_type):
                 output["ok"] = False
             if challenge == "matrix-completion":
                 img = Image.open(archive.open(f))
+                logging.info(img.height, img.width)
                 if img.height != 85 or img.width != 85:
                     output["errors"].append(f'File {f} should be 85x85')
                     output["ok"] = False
