@@ -11,12 +11,6 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 
 # logging
 import logging
-logging.basicConfig(
-    filename="eval.log", 
-    format=f"[%(asctime)s] [%(levelname)s] [{__file__}] %(message)s", 
-    level=logging.INFO, 
-    datefmt="%Y-%m-%dT%H:%M:%S%z"
-)
 
 # Based on https://developers.google.com/gmail/api/guides/sending
 

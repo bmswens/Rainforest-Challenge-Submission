@@ -5,8 +5,8 @@ matrix_completion = {
 }
 
 estimation = {
-    "image_type": ".png",
-    "image_count": 21967
+    "image_type": ".tiff",
+    "image_count": 1000
 }
 
 translation = {
