@@ -49,7 +49,7 @@ def submit():
         return response
     # make the folder to extract to
     utils.save(zip_path, __name__, team_name, emails)
-    return redirect("/estimation/", code=301)
+    return redirect("/deforestation/", code=301)
 
 @estimation.route('/api/expected-files')
 def get_expected_files():

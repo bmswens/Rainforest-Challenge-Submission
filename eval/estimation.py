@@ -85,7 +85,7 @@ def norm_image(z):
 
 def eval_date(submission_folder, truth_folder):
     output = {}
-    chips = [f for f in os.listdir(truth_folder) if '.png' in f]
+    chips = [f for f in os.listdir(truth_folder) if '.tiff' in f]
     for chip in chips:
         # truth
         truth_path = os.path.join(truth_folder, chip)
@@ -140,7 +140,7 @@ def eval_submission(folder, truth_folder="/app/truth/estimation"):
     accuracies = []
     f1s = []
     ious = []
-    if all(['.png' in date for date in dates]):
+    if all(['.tiff' in date for date in dates]):
         scores = eval_date(os.path.join(folder, 'images'), truth_folder)
         output['all'] = scores
         accuracies.append(scores["accuracy"])
