@@ -9,6 +9,15 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 
+# logging
+import logging
+logging.basicConfig(
+    filename="eval.log", 
+    format=f"[%(asctime)s] [%(levelname)s] [{__file__}] %(message)s", 
+    level=logging.INFO, 
+    datefmt="%Y-%m-%dT%H:%M:%S%z"
+)
+
 # Based on https://developers.google.com/gmail/api/guides/sending
 
 def get_creds():
@@ -62,6 +71,13 @@ def send_mail(body, to, subject="MultiEarth Eval Update"):
         userId="me", 
         body=create_message
     ).execute()
+
+
+def safe_send_mail(body, to, subject="MultiEarth Eval Update"):
+    try:
+        send_mail(body, to, subject)
+    except:
+        logging.info("Unable to send mail.")
 
 
 if __name__ == '__main__':

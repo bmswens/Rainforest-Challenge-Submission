@@ -15,6 +15,7 @@ import rasterio
 
 # custom
 from database import Database
+import mail
 
 # logging
 import logging
@@ -172,6 +173,12 @@ def eval_submission(folder, truth_folder="/app/truth/estimation"):
     meta['evaluated'] = True
     with open(meta_path, 'w') as outgoing:
         outgoing.write(json.dumps(meta, indent=2))
+     # send email
+    to = meta['emails']
+    del output[date]
+    body = json.dumps(output, indent=2)
+    subject = "MultiEarth Fire Estimation Eval"
+    mail.safe_send_mail(body, to, subject)
     return output
 
 

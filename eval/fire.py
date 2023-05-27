@@ -182,7 +182,7 @@ def eval_submission(folder, truth_folder="/app/truth/fire"):
     del output[date]
     body = json.dumps(output, indent=2)
     subject = "MultiEarth Fire Estimation Eval"
-    mail.send_mail(body, to, subject)
+    mail.safe_send_mail(body, to, subject)
     return output
 
 
