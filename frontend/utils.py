@@ -55,8 +55,8 @@ def verify(path, challenge, f_type):
                 output["ok"] = False
             if challenge == "matrix-completion":
                 img = Image.open(archive.open(f))
-                if img.height != 85 or img.width != 85:
-                    output["errors"].append(f'File {f} should be 85x85 but was {img.height}x{img.width}')
+                if img.height != 256 or img.width != 256:
+                    output["errors"].append(f'File {f} should be 256x256 but was {img.height}x{img.width}')
                     output["ok"] = False
     return output
 
