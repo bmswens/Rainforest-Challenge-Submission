@@ -16,6 +16,7 @@ import numpy
 from pytorch_fid import fid_score
 import subprocess
 import rasterio
+import mail
 
 # custom
 from database import Database
@@ -184,6 +185,7 @@ def eval_team(team_path, team):
             content = json.dumps(metadata, indent=2)
             output.write(content)
         scores.append(results)
+        mail.safe_send_mail(content, metadata.emails)
     return scores
         
 @repeat(every(60).seconds)
