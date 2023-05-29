@@ -68,14 +68,14 @@ def create_rgb_image(filename, tiff_dir):
 def eval_mapping(obj, submission_folder, truth="/app/truth/translation"):
     output = {}
     values = []
-    # 2023 inverted, key is submission, values are truths
-    for submission_path in obj:
+    for truth_path in obj:
         MSEs = []
-        output[submission_path] = {}
-        submission_abs_path = os.path.join(submission_folder, 'images', submission_path)
-        submission_img = load_image(submission_abs_path)
-        for truth_path in obj[submission_path]:
-            truth_img = create_rgb_image(truth_path, truth)
+        truth_abs_path = os.path.join(truth, truth_path)
+        truth_img = load_image(truth_abs_path)
+        output[truth_path] = {}
+        for submission_path in obj[truth_path]:
+            submission_abs_path = os.path.join(submission_folder, 'images', submission_path)
+            submission_img = load_image(submission_abs_path)
             mse = MSE(truth_img.flatten(), submission_img.flatten())
             MSEs.append(mse)
             output[truth_path][submission_path] = mse
