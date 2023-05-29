@@ -65,18 +65,16 @@ def create_rgb_image(filename, tiff_dir):
     return np.stack((img_b4, img_b3, img_b2), axis=2)
 
 
-def eval_mapping(obj, submission_folder, truth="/app/truth/translation"):
+def eval_mapping(obj, submission_files, truth="/app/truth/translation/translation"):
     output = {}
     values = []
-    # target date, _1 -> _3, arbitrary n of truth
     for truth_path in obj:
         MSEs = []
         truth_abs_path = os.path.join(truth, truth_path)
         truth_img = load_image(truth_abs_path)
         output[truth_path] = {}
-        for submission_path in obj[truth_path]:
-            submission_abs_path = os.path.join(submission_folder, 'images', submission_path)
-            submission_img = load_image(submission_abs_path)
+        for submission_path in submission_files:
+            submission_img = load_image(submission_path)
             mse = MSE(truth_img.flatten(), submission_img.flatten())
             MSEs.append(mse)
             output[truth_path][submission_path] = mse
@@ -94,8 +92,9 @@ def eval_submission(submission, truth="/app/truth/translation"):
     with open(os.path.join(truth, 'mappings.json')) as incoming:
         inputs = json.load(incoming)
     for input_f in inputs:
+        input_files = [os.path.join(submission, 'images', 'translation', f) for f in input_f]
         mapping = inputs[input_f]
-        scores = eval_mapping(mapping, submission)
+        scores = eval_mapping(mapping, input_files)
         output[input_f] = scores
         values.append(scores["sum"])
     output["average"] = avg(values)

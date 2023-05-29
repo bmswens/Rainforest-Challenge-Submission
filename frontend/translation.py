@@ -57,7 +57,10 @@ def get_expected_files():
     f_type = ".tiff"
     with open('/app/truth/translation/files.json') as incoming:
         items = json.load(incoming)
-    files = [os.path.join('/translation/', f) for f in items]
+    files = []
+    for key in items:
+        for f in eval(key):
+            files.append(os.path.join('/translation', f))
     return {
         "count": len(files),
         "image_type": f_type,
