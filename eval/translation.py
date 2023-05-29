@@ -68,6 +68,7 @@ def create_rgb_image(filename, tiff_dir):
 def eval_mapping(obj, submission_folder, truth="/app/truth/translation"):
     output = {}
     values = []
+    # target date, _1 -> _3, arbitrary n of truth
     for truth_path in obj:
         MSEs = []
         truth_abs_path = os.path.join(truth, truth_path)
