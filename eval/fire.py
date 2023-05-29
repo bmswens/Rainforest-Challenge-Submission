@@ -99,7 +99,8 @@ def eval_date(submission_folder, truth_folder):
         # submission
         submission_path = os.path.join(submission_folder, chip)
         submission_image = rasterio.open(submission_path).read()[0]
-        submission_image = norm_image(submission_image)
+        # Users are expected to submit binary img, so no norm needed
+        # submission_image = norm_image(submission_image)
 
         # pixel accuracy
         accuracy = get_pixel_accuracy(truth_image, submission_image)

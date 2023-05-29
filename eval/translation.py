@@ -7,6 +7,7 @@ import time
 import rasterio
 from sklearn.metrics import mean_squared_error as MSE
 import numpy as np
+from PIL import Image
 from schedule import every, repeat, run_pending
 
 # custom
@@ -50,17 +51,31 @@ def load_image(path):
     return multi_rgb
 
 
+def create_rgb_image(filename, tiff_dir):
+    """
+    Thanks to Gregory Angelides
+    Given a filename of the format Sentinel-1_lon_lat_date.tiff will
+    read the 3 one channel images saved in a specified directory and
+    stack them into a single RGB numpy array with shape (256, 256, 3).
+    """
+    filename_parts = filename.split("_")
+    img_b2 = np.array(Image.open(f"{tiff_dir}/{filename_parts[0]}_B2_{'_'.join(filename_parts[1:])}"))
+    img_b3 = np.array(Image.open(f"{tiff_dir}/{filename_parts[0]}_B3_{'_'.join(filename_parts[1:])}"))
+    img_b4 = np.array(Image.open(f"{tiff_dir}/{filename_parts[0]}_B4_{'_'.join(filename_parts[1:])}"))
+    return np.stack((img_b4, img_b3, img_b2), axis=2)
+
+
 def eval_mapping(obj, submission_folder, truth="/app/truth/translation"):
     output = {}
     values = []
-    for truth_path in obj:
+    # 2023 inverted, key is submission, values are truths
+    for submission_path in obj:
         MSEs = []
-        truth_abs_path = os.path.join(truth, truth_path)
-        truth_img = load_image(truth_abs_path)
-        output[truth_path] = {}
-        for submission_path in obj[truth_path]:
-            submission_abs_path = os.path.join(submission_folder, 'images', submission_path)
-            submission_img = load_image(submission_abs_path)
+        output[submission_path] = {}
+        submission_abs_path = os.path.join(submission_folder, 'images', submission_path)
+        submission_img = load_image(submission_abs_path)
+        for truth_path in obj[submission_path]:
+            truth_img = create_rgb_image(truth_path, truth)
             mse = MSE(truth_img.flatten(), submission_img.flatten())
             MSEs.append(mse)
             output[truth_path][submission_path] = mse
