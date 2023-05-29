@@ -98,7 +98,7 @@ def eval_date(submission_folder, truth_folder):
 
         # submission
         submission_path = os.path.join(submission_folder, chip)
-        submission_image = rasterio.open(submission_path, dtype='uint8').read()[0]
+        submission_image = rasterio.open(submission_path).read()[0]
         # Users are expected to submit binary img, so no norm needed
         submission_image = Image.fromarray(np.uint8(submission_image))
 
