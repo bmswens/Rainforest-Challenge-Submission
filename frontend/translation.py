@@ -24,8 +24,7 @@ translation = Blueprint(
 def leaderboard():
     with Database("db/db.sqlite3") as db:
         # top scores hidden
-        top_scores = []
-        # top_scores = db.get_top_translation_scores()
+        top_scores = db.get_top_translation_scores()
     for index, row in enumerate(top_scores):
         row["rank"] = index + 1
     return render_template("image-translation-leaderboard.html", ranks=top_scores)

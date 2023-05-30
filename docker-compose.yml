@@ -1,6 +1,7 @@
 version: '3'
 services:
   frontend:
+    restart: unless-stopped
     build: ./frontend
     ports:
       - 80:5000
@@ -10,6 +11,7 @@ services:
       - /srv/bmswens/truth:/app/truth
 
   eval:
+    restart: unless-stopped
     build: ./eval
     volumes:
       - /srv/bmswens/submissions:/app/submissions
