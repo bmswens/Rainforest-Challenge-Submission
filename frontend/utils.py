@@ -37,6 +37,7 @@ def verify_c3(path, verify_path="/app/c3_files.json"):
             if f_path not in files:
                 output["ok"] = False
                 output["errors"].append(f"Missing file: {f_path}")
+                return output
     return output
 
 
