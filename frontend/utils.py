@@ -46,8 +46,8 @@ def verify(path, challenge, f_type):
     if challenge == "translation": 
         return output
     with ZipFile(path) as archive:
-        files = archive.namelist()
-        expected_files = [f.lower() for f in get_files(f'/app/truth/{challenge}', f_type)]
+        files = [f.lower() for f in archive.namelist()]
+        expected_files = get_files(f'/app/truth/{challenge}', f_type)
         for f in expected_files:
             f = f[1:].lower()
             if f not in files:
