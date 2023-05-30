@@ -47,9 +47,9 @@ def verify(path, challenge, f_type):
         return output
     with ZipFile(path) as archive:
         files = archive.namelist()
-        expected_files = get_files(f'/app/truth/{challenge}', f_type)
+        expected_files = [f.lower() for f in get_files(f'/app/truth/{challenge}', f_type)]
         for f in expected_files:
-            f = f[1:]
+            f = f[1:].lower()
             if f not in files:
                 output["errors"].append(f'Missing file: {f}')
                 output["ok"] = False
@@ -61,6 +61,14 @@ def verify(path, challenge, f_type):
     return output
 
 
+def lowercase_all_files(dir):
+    starting_dir = os.getcwd()
+    os.chdir(dir)
+    for f in os.listdir('.'):
+        os.rename(f, f.lower())
+    os.chdir(starting_dir)
+
+
 def save(zip_path, challenge, team_name, emails):
     now = datetime.datetime.now()
     team_folder = f"submissions/valid/{challenge}/{team_name}/{now.isoformat().replace(':', '-')}"
@@ -70,6 +78,10 @@ def save(zip_path, challenge, team_name, emails):
         files = archive.namelist()
         to_extract = [f for f in files if config[challenge]["image_type"] in f]
         archive.extractall(image_target, to_extract)
+    # all lowercase
+    if challenge in ['fire', 'estimation']:
+        lowercase_all_files(image_target)
+    os.chdir()
     with open(f"{team_folder}/metadata.json", 'w') as output:
         content = json.dumps(
             {
