@@ -30,7 +30,7 @@ def verify_c3(path, verify_path="/app/c3_files.json"):
         files = archive.namelist()
     with open('/app/truth/translation/files.json') as incoming:
         items = json.load(incoming)
-    expected_files = [os.path.join(f) for f in items]
+    expected_files = [os.path.join('translation', f) for f in items]
     for f in expected_files:
         if f not in files:
             output["ok"] = False
