@@ -149,12 +149,16 @@ def evaluate(path):
         # results = {"psnr": 360, "lpips": 0, "ssim": 1}
         # TODO: Replace this hack with the actual Python function call
         try:
-            results["fid"] = fid_score.calculate_fid_given_paths(
+            fid = fid_score.calculate_fid_given_paths(
                 [mode_folder, submission_folder],
                 1,
                 device,
                 2048
             )
+            fid = abs(fid)
+            if fid < 1e-5:
+                fid = 0
+            results["fid"] = fid
         except Exception as e:
             logging.error(e)
             results["fid"] = 1
