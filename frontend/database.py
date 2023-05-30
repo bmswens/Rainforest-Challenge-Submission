@@ -95,6 +95,28 @@ class Database:
             return 1
         else:
             return results[0][0]
+        
+    def get_top_estimation_scores(self, n=25):
+        self.cursor.execute(f"SELECT * FROM FireScores ORDER BY pixel DESC LIMIT {n};")
+        results = self.cursor.fetchall()
+        output = []
+        for row in results:
+            output.append({
+                "team": row[0],
+                "pixel": row[1],
+                "f1": row[2],
+                "iou": row[3]
+            })
+        return output
+
+    def get_fire_score_by_team(self, team):
+        self.cursor.execute(f"SELECT pixel from FireScores WHERE team = '{team}';")
+        results = self.cursor.fetchall()
+        if not results:
+            self.cursor.execute(f"INSERT INTO FireScores (team, pixel, f1, iou) VALUES ('{team}', 0, 0, 0);")
+            return 1
+        else:
+            return results[0][0]
 
     def create_database(self):
         self.__enter__()
@@ -125,6 +147,15 @@ class Database:
                 score REAL NOT NULL
             );
             """,
+            """
+            CREATE TABLE FireScores
+            (
+                team TEXT PRIMARY KEY,
+                pixel REAL NOT NULL,
+                f1 REAL NOT NULL, 
+                iou REAL NOT NULL
+            );
+            """
         ]
         for command in table_creation:
             self.cursor.execute(command)

@@ -40,8 +40,8 @@ class Database:
         self.cursor.execute(query_string)
         return self.cursor.fetchall()
 
-    def get_top_matrix_scores(self, n=5):
-        self.cursor.execute(f"SELECT * FROM MatrixCompletionScores ORDER BY lpips DESC LIMIT {n};")
+    def get_top_matrix_scores(self, n=25):
+        self.cursor.execute(f"SELECT * FROM MatrixCompletionScores ORDER BY lpips ASC LIMIT {n};")
         results = self.cursor.fetchall()
         output = []
         for row in results:
@@ -54,7 +54,7 @@ class Database:
             })
         return output
 
-    def get_top_estimation_scores(self, n=5):
+    def get_top_estimation_scores(self, n=25):
         self.cursor.execute(f"SELECT * FROM EstimationScores ORDER BY pixel DESC LIMIT {n};")
         results = self.cursor.fetchall()
         output = []
@@ -67,7 +67,7 @@ class Database:
             })
         return output
 
-    def get_top_translation_scores(self, n=5):
+    def get_top_translation_scores(self, n=25):
         self.cursor.execute(f"SELECT * FROM ImageToImageScores ORDER BY score ASC LIMIT {n};")
         results = self.cursor.fetchall()
         output = []
@@ -82,7 +82,7 @@ class Database:
         self.cursor.execute(f"SELECT lpips FROM matrixcompletionscores WHERE team = '{team}';")
         results = self.cursor.fetchall()
         if not results:
-            self.cursor.execute(f"INSERT INTO matrixcompletionscores (team, lpips, psnr, ssim, fid) VALUES ('{team}', 1, 0, 0, 0);")
+            self.cursor.execute(f"INSERT INTO matrixcompletionscores (team, lpips, psnr, ssim) VALUES ('{team}', 1, 0, 0);")
             return 1
         else:
             return results[0][0]
@@ -95,12 +95,25 @@ class Database:
             return 1
         else:
             return results[0][0]
+        
+    def get_top_estimation_scores(self, n=25):
+        self.cursor.execute(f"SELECT * FROM FireScores ORDER BY pixel DESC LIMIT {n};")
+        results = self.cursor.fetchall()
+        output = []
+        for row in results:
+            output.append({
+                "team": row[0],
+                "pixel": row[1],
+                "f1": row[2],
+                "iou": row[3]
+            })
+        return output
 
-    def get_translation_score_by_team(self, team):
-        self.cursor.execute(f"SELECT score from ImageToImageScores WHERE team = '{team}';")
+    def get_fire_score_by_team(self, team):
+        self.cursor.execute(f"SELECT pixel from FireScores WHERE team = '{team}';")
         results = self.cursor.fetchall()
         if not results:
-            self.cursor.execute(f"INSERT INTO ImageToImageScores (team, score) VALUES ('{team}', 1);")
+            self.cursor.execute(f"INSERT INTO FireScores (team, pixel, f1, iou) VALUES ('{team}', 0, 0, 0);")
             return 1
         else:
             return results[0][0]
@@ -134,6 +147,15 @@ class Database:
                 score REAL NOT NULL
             );
             """,
+            """
+            CREATE TABLE FireScores
+            (
+                team TEXT PRIMARY KEY,
+                pixel REAL NOT NULL,
+                f1 REAL NOT NULL, 
+                iou REAL NOT NULL
+            );
+            """
         ]
         for command in table_creation:
             self.cursor.execute(command)

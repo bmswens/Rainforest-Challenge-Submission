@@ -202,9 +202,9 @@ def eval_team(folder, team):
             best = scores
             accuracy = scores["accuracy"]
         with Database('db/db.sqlite3') as db:
-            previous_best = db.get_estimation_score_by_team(team)
+            previous_best = db.get_fire_score_by_team(team)
             if accuracy > previous_best:
-                db.query(f"UPDATE EstimationScores SET pixel = {accuracy}, f1 = {best['f1']}, iou = {best['iou']} WHERE team = '{team}'")
+                db.query(f"UPDATE FireScores SET pixel = {accuracy}, f1 = {best['f1']}, iou = {best['iou']} WHERE team = '{team}'")
 
         
 @repeat(every(60).seconds)
