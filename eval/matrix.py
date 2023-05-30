@@ -189,8 +189,8 @@ def eval_team(team_path, team):
             content = json.dumps(metadata, indent=2)
             output.write(content)
         scores.append(results)
-        del content['prediction']
-        mail.safe_send_mail(content, metadata["emails"])
+        del metadata['prediction']
+        mail.safe_send_mail(json.dumps(metadata, indent=2), metadata["emails"])
     return scores
         
 @repeat(every(60).seconds)
