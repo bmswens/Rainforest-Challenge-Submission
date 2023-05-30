@@ -30,7 +30,6 @@ def verify_c3(path, verify_path="/app/c3_files.json"):
         files = archive.namelist()
     with open('/app/truth/translation/files.json') as incoming:
         items = json.load(incoming)
-    expected_files = []
     for key in items:
         for f in eval(key):
             f_path = os.path.join('translation', f)
