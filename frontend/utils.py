@@ -80,7 +80,7 @@ def save(zip_path, challenge, team_name, emails):
         archive.extractall(image_target, to_extract)
     # all lowercase
     if challenge in ['fire', 'estimation']:
-        lowercase_all_files(image_target)
+        lowercase_all_files(os.path.join(image_target, challenge))
     with open(f"{team_folder}/metadata.json", 'w') as output:
         content = json.dumps(
             {
