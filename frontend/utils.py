@@ -46,10 +46,13 @@ def verify(path, challenge, f_type):
     if challenge == "translation": 
         return output
     with ZipFile(path) as archive:
-        files = [f.lower() for f in archive.namelist()]
+        files = [f for f in archive.namelist()]
         expected_files = get_files(f'/app/truth/{challenge}', f_type)
+        if challenge in ['fire', 'estimation']:
+            files = [f.lower() for f in files]
+            expected_files = [f.lower() for f in expected_files]
         for f in expected_files:
-            f = f[1:].lower()
+            f = f[1:]
             if f not in files:
                 output["errors"].append(f'Missing file: {f}')
                 output["ok"] = False
