@@ -33,10 +33,10 @@ def verify_c3(path, verify_path="/app/c3_files.json"):
     expected_files = []
     for key in items:
         for f in eval(key):
-            f_path = os.path.join('translatiopn', f)
+            f_path = os.path.join('translation', f)
             if f_path not in files:
                 output["ok"] = False
-                output["errors"].append(f"Missing file: {f}")
+                output["errors"].append(f"Missing file: {f_path}")
     return output
 
 
