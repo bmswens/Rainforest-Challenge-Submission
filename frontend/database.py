@@ -96,7 +96,7 @@ class Database:
         else:
             return results[0][0]
         
-    def get_top_estimation_scores(self, n=25):
+    def get_top_fire_scores(self, n=25):
         self.cursor.execute(f"SELECT * FROM FireScores ORDER BY pixel DESC LIMIT {n};")
         results = self.cursor.fetchall()
         output = []
