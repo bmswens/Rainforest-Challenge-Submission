@@ -81,7 +81,6 @@ def save(zip_path, challenge, team_name, emails):
     # all lowercase
     if challenge in ['fire', 'estimation']:
         lowercase_all_files(image_target)
-    os.chdir()
     with open(f"{team_folder}/metadata.json", 'w') as output:
         content = json.dumps(
             {
