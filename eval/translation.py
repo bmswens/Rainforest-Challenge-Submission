@@ -66,7 +66,6 @@ def create_rgb_image(filename, tiff_dir):
     img_b4 = np.array(rasterio.open(f"{tiff_dir}/{filename_parts[0]}_B4_{'_'.join(filename_parts[1:])}").read()[0])
     img_b4 = norm_image(img_b4)
     output = np.stack((img_b4, img_b3, img_b2))
-    logging.info(f'Truth shape is {output.shape}')
     return output
 
 
@@ -79,6 +78,7 @@ def eval_mapping(obj, submission_files, truth="/app/truth/translation/translatio
         output[truth_path] = {}
         for submission_path in submission_files:
             submission_img = load_image(submission_path)
+            logging.info(f'Truth dtype: {truth_img.dtype}, Sub dtype: {submission_img.dtype}')
             mse = MSE(truth_img.flatten(), submission_img.flatten())
             MSEs.append(mse)
             output[truth_path][submission_path] = mse
