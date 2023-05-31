@@ -59,11 +59,11 @@ def create_rgb_image(filename, tiff_dir):
     stack them into a single RGB numpy array with shape (256, 256, 3).
     """
     filename_parts = filename.split("_")
-    img_b2 = np.array(Image.open(f"{tiff_dir}/{filename_parts[0]}_B2_{'_'.join(filename_parts[1:])}"))
+    img_b2 = np.array(rasterio.open(f"{tiff_dir}/{filename_parts[0]}_B2_{'_'.join(filename_parts[1:])}")[0])
     img_b2 = norm_image(img_b2)
-    img_b3 = np.array(Image.open(f"{tiff_dir}/{filename_parts[0]}_B3_{'_'.join(filename_parts[1:])}"))
+    img_b3 = np.array(rasterio.open(f"{tiff_dir}/{filename_parts[0]}_B3_{'_'.join(filename_parts[1:])}")[0])
     img_b3 = norm_image(img_b3)
-    img_b4 = np.array(Image.open(f"{tiff_dir}/{filename_parts[0]}_B4_{'_'.join(filename_parts[1:])}"))
+    img_b4 = np.array(rasterio.open(f"{tiff_dir}/{filename_parts[0]}_B4_{'_'.join(filename_parts[1:])}")[0])
     img_b4 = norm_image(img_b4)
     output = np.stack((img_b4, img_b3, img_b2))
     logging.info(f'Truth shape is {output.shape}')
