@@ -72,16 +72,15 @@ def create_rgb_image(filename, tiff_dir):
 def eval_mapping(obj, submission_files, truth="/app/truth/translation/translation"):
     output = {}
     values = []
-    for truth_path in obj:
+    for submission_path in submission_files:
         MSEs = []
-        truth_img = create_rgb_image(truth_path, truth)
-        output[truth_path] = {}
-        for submission_path in submission_files:
-            submission_img = load_image(submission_path)
-            logging.info(f'Truth dtype: {truth_img.dtype}, Sub dtype: {submission_img.dtype}')
+        output[submission_path] = {}
+        submission_img = load_image(submission_path)
+        for truth_path in obj:
+            truth_img = create_rgb_image(truth_path, truth)
             mse = MSE(truth_img.flatten(), submission_img.flatten())
             MSEs.append(mse)
-            output[truth_path][submission_path] = mse
+            output[submission_path][truth_path] = mse
             logging.info(f"{truth_path.replace('.tiff', '')} -> {submission_path.replace('.tiff', '')} = {mse}")
         best = min(MSEs)
         output[truth_path]["min"] = best
