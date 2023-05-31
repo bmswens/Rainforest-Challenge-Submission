@@ -77,7 +77,18 @@ class Database:
                 "score": row[1]
             })
         return output
+    
+
+    def get_translation_score_by_team(self, team):
+        self.cursor.execute(f"SELECT score from ImageToImageScores WHERE team = '{team}';")
+        results = self.cursor.fetchall()
+        if not results:
+            self.cursor.execute(f"INSERT INTO ImageToImageScores (team, score) VALUES ('{team}', 1);")
+            return 1
+        else:
+            return results[0][0]
         
+
     def get_completion_score_by_team(self, team):
         self.cursor.execute(f"SELECT lpips FROM matrixcompletionscores WHERE team = '{team}';")
         results = self.cursor.fetchall()

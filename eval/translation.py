@@ -92,7 +92,6 @@ def eval_submission(submission, truth="/app/truth/translation"):
         inputs = json.load(incoming)
     for input_f in inputs:
         input_files = [os.path.join(submission, 'images', 'translation', f) for f in eval(input_f)]
-        logging.info(input_files)
         mapping = inputs[input_f]
         scores = eval_mapping(mapping, input_files)
         output[input_f] = scores
