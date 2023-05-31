@@ -36,7 +36,6 @@ def submission_page():
 
 @translation.route("/api/submit", methods=["POST"])
 def submit():
-    return "This challenge is currently closed", 400
     team_name = request.form["teamName"]
     emails = request.form["emails"].split('\r\n')
     # just in case
