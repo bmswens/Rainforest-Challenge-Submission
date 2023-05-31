@@ -70,8 +70,7 @@ def eval_mapping(obj, submission_files, truth="/app/truth/translation/translatio
     values = []
     for truth_path in obj:
         MSEs = []
-        truth_abs_path = os.path.join(truth, truth_path)
-        truth_img = load_image(truth_abs_path)
+        truth_img = create_rgb_image(truth_path, truth)
         output[truth_path] = {}
         for submission_path in submission_files:
             submission_img = load_image(submission_path)
