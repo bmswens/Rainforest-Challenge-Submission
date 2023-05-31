@@ -89,7 +89,7 @@ def eval_mapping(obj, submission_files, truth="/app/truth/translation/translatio
 def eval_submission(submission, truth="/app/truth/translation"):
     output = {}
     values = []
-    with open(os.path.join(truth, 'mappings.json')) as incoming:
+    with open(os.path.join(truth, 'files.json')) as incoming:
         inputs = json.load(incoming)
     for input_f in inputs:
         input_files = [os.path.join(submission, 'images', 'translation', f) for f in input_f]
