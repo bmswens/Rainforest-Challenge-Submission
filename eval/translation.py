@@ -83,7 +83,7 @@ def eval_mapping(obj, submission_files, truth="/app/truth/translation/translatio
             output[submission_path][truth_path] = mse
             logging.info(f"{truth_path.replace('.tiff', '')} -> {submission_path.replace('.tiff', '')} = {mse}")
         best = min(MSEs)
-        output[truth_path]["min"] = best
+        output[submission_path]["min"] = best
         values.append(best)
     output["sum"] = sum(values)
     return output
